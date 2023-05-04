@@ -82,26 +82,79 @@ class Parser(Base):
 								   u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
 								   "]+", flags=re.UNICODE)
 		group_name_deleted_emoji = emoji_pattern.sub('', self.group_to_pars.title)
-		with open(f'{group_name_deleted_emoji}_users2.txt', 'w', encoding='UTF-8') as txtfile:
+		with open(f'{group_name_deleted_emoji}_users.txt', 'w', encoding='UTF-8') as txtfile:
 			for user in users:
 				if not user.is_self and not user.bot:
-					txtfile.write(f"{user.id} {user.username}\n")
+					txtfile.write(f"{user.id} {user.username} {user.access_hash}\n")
 
 
-client = Client(API_ID, API_HASH)
+class MessageSender(Base):
+	def __init__(self, tg_client):
+		super().__init__(tg_client)
+		self.file_name = ""
+
+	def set_file_name(self, file_name):
+		self.file_name = file_name + '.txt'
+
+	def send_message_task_manager(self):
+		users = self.read_users()
+
+		for user in users:
+			user_id = user.get('id')
+			user_username = user.get("username")
+
+			try:
+				if user_username == "None":
+					user_entity = self.client.get_entity(int(user_id))
+				else:
+					user_entity = self.client.get_entity(user_username)
+
+				self.send_message_task(user_entity)
+
+				time.sleep(random.randrange(10, 30))
+
+			except Exception as e:
+				print(e)
+				print(user.get("username"))
+
+			except PeerFloodError:
+				print("[!] Получаю ошибку Flood от telegram. \n[!] Сценарий сейчас останавливается. \n[!] Пожалуйста, повторите попытку через некоторое время.")
+
+			except UserPrivacyRestrictedError:
+				print("[!] Настройки конфиденциальности пользователя не позволяют вам этого делать. Пропускаем.")
+
+	def send_message_task(self, to_user):
+		default_message = f"Привет {to_user.username}! Я тестирую эту хуйню"
+
+		self.client.send_message(to_user, default_message)
+
+	def read_users(self):
+		FIELDS = ('id', 'username', 'access_hash')
+		users = []
+		with open(self.file_name, "r", encoding='UTF-8') as file:
+			lines = file.readlines()
+			for i in lines:
+				users.append(dict(zip(FIELDS, i.split())))
+
+		return users
 
 
-
-# inviter = UserInviter(client.get_client())
-# group_to_invite = "test_to_add2"
-# group_from_invite = "KAKA"
-# inviter.search_chats_to_invite(group_to_invite, group_from_invite)
-# inviter.invite_task_manager()
+if __name__ == "__main__":
+	client = Client(API_ID, API_HASH)
 
 
+	# inviter = UserInviter(client.get_client())
+	# group_to_invite = "test_to_add2"
+	# group_from_invite = "KAKA"
+	# inviter.search_chats_to_invite(group_to_invite, group_from_invite)
+	# inviter.invite_task_manager()
 
 
+	# parser = Parser(client.get_client())
+	# parser.set_chat_to_collect("KAKA")
+	# parser.collect_and_save_users()
 
-# parser = Parser(client.get_client())
-# parser.set_chat_to_collect("💬 BLAUGRANA CHAT")
-# parser.collect_and_save_users()
+	sms_sender = MessageSender(client.get_client())
+	sms_sender.set_file_name("KAKA_users")
+	sms_sender.read_users()
+	sms_sender.send_message_task_manager()

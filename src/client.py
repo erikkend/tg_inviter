@@ -3,7 +3,7 @@ from telethon.sync import TelegramClient
 
 class Client:
     def __init__(self, api_id, api_hash):
-        self.client = TelegramClient("Darkhan", api_id, api_hash)
+        self.client: TelegramClient = TelegramClient("Darkhan", api_id, api_hash)
         self.client.connect()
         self.check_is_client_connected()
 

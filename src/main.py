@@ -13,8 +13,15 @@ from telethon.errors.rpcerrorlist import PeerFloodError, UserPrivacyRestrictedEr
 class UserInviter:
 	def __init__(self, api_id, api_hash):
 		self.client = TelegramClient("Darkhan", api_id, api_hash)
-		self.client.start()
+		self.client.connect()
+		self.check_is_client_connected()
 		self.need_groups = {}
+
+	def check_is_client_connected(self):
+		if not self.client.is_user_authorized():
+			phone = input('Вы не авторизованы. Для авторизации введите номер телеграм: ')
+			self.client.send_code_request(phone)
+			self.client.sign_in(phone, input('Введите код: '))
 
 	def invite_task_manager(self):
 		users = self.client.get_participants(self.need_groups.get('invite_from_group'))
@@ -61,4 +68,4 @@ group_from_invite = "KAKA"
 # group_to_invite = input("Напиши название группы в которую хочешь инвайтить:\n")
 # group_from_invite = input("Напиши название группы с которой будешь инвайтить:\n")
 inviter.get_group_users(group_to_invite, group_from_invite)
-inviter.invite_task_manager()
+# inviter.invite_task_manager()
